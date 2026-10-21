@@ -1,0 +1,41 @@
+{
+  "name": "sellerpilot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI back office for cross-border sellers: chat order -> PayPal invoice/checkout, payment tracking, collections, capture/refund with human approval.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^4.0.102",
+    "@ai-sdk/openai-compatible": "^3.0.75",
+    "ag-grid-community": "^36.2.0",
+    "ag-grid-react": "^36.2.0",
+    "ai": "^7.0.148",
+    "better-sqlite3": "^12.11.1",
+    "next": "^16.4.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
+  }
+}
