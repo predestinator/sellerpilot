@@ -1,6 +1,6 @@
 # SellerPilot status
 
-_Last updated 21 Oct 2026, 19:20 IST (UTC+5:30)_
+_Last updated 21 Oct 2026, 20:45 IST (UTC+5:30)_
 
 ## Works today (no accounts needed)
 
@@ -38,35 +38,43 @@ Verified on 21 Oct 2026. Logs are in `../logs/`.
 | LLM agent (Gemini or Groq via Vercel AI SDK v7, multi-step tool calls, image input) | `lib/agent/provider.ts`, `runner.ts` | `GEMINI_API_KEY` or `GROQ_API_KEY`. Tested with the AI SDK mock model, and it falls back to offline on error |
 | AG Studio analytics dashboard | seam: `components/grid/RecordsGrid.tsx`, `/api/records` | AG Studio trial licence (start ~Nov 1) |
 
-## Unverified assumptions (check on first sandbox run)
+## Live sandbox smoke test (21 Oct 2026, 20:40 IST)
 
-1. Sending an invoice with **no recipient email** uses `send_to_recipient: false` and relies on sharing the payer link. Whether the sandbox accepts this is untested.
-2. **Status right after `/send`**: the docs show both `SENT` and `UNPAID`. The code treats both as awaiting payment.
-3. **`PAYMENT.CAPTURE.REFUNDED` payload**: we follow the `up` link to find the capture. That link shape is inferred, not confirmed.
-4. **Refunding an invoice payment** through Payments v2 using the invoice's `payment_id` is not attempted. Refunds are limited to checkout captures for now.
-5. Mock-only error names (`REFUND_AMOUNT_EXCEEDED` etc.) may differ from the sandbox's real `issue` codes. The REST path surfaces PayPal's own `name`, `issue` and `debug_id` either way.
-6. Default model ids (`gemini-2.5-flash`, `openai/gpt-oss-120b`) and Groq image support should be checked when the keys exist.
-7. The tracking `carrier` value list in the agent schema is a short subset of the Orders v2 enum.
-8. `@paypal/agent-toolkit` 1.11 peer-depends on `ai@^4`/`zod@^3`, which conflicts with AI SDK v7. We implemented equivalent typed tools ourselves. It's worth re-checking for a newer toolkit release.
+`npm run smoke` (`scripts/live-smoke.ts`) drives the real `RestPayPalGateway` against `api-m.sandbox.paypal.com` with the SellerPilot sandbox app (US business `sb-oof2753471588@business.example.com`, buyer `sb-qx72v53480150@personal.example.com`). **17/17 steps as expected.** Secret and access token are redacted from stdout and the JSON report (`../logs/live-smoke-*.json`). `npm test` after: 11 files, 58 passed.
 
-## Next step that needs Sahil
+| Step | Real result |
+|---|---|
+| OAuth token | 200, 29 scopes, `expires_in` ~32,000 s |
+| Create draft invoice | **201 with a link body only** (`{rel:"self", href:".../v2/invoicing/invoices/INV2-XXXX-XXXX-XXXX-XXXX", method:"GET"}`), no `id` in the body. Our href fallback + read-back works. Id shape `INV2-HEG8-4982-279Q-VQRS`; `invoice_number` auto-assigned `"0001"`, `"0002"`... Status `DRAFT` |
+| Send (recipient has email) | **200**, body `{rel:"payer-view", href:"https://www.sandbox.paypal.com/invoice/p/#INV2-...", method:"GET"}`. GET afterwards: status **`SENT`** |
+| Send (no recipient email, `send_to_recipient:false`) | **Accepted**, 200 with the same payer-view link. GET afterwards: status **`UNPAID`** |
+| Remind | 204 |
+| Cancel | 204, status then `CANCELLED` |
+| Search invoices by `recipient_email` | works (`total_items`, `items[].status`) |
+| Create order (intent CAPTURE, USD 5.00) | **200** (not 201), status **`PAYER_ACTION_REQUIRED`** (not `CREATED`), because we send `payment_source.paypal.experience_context`. Links: `self` + **`payer-action`** → `https://www.sandbox.paypal.com/checkoutnow?token=<orderId>`. Order id shape `8UY87107NP353060H` (17 chars). Mock already models this |
+| Capture before approval | 422 `ORDER_NOT_APPROVED` (with `debug_id`), surfaced cleanly by `PayPalApiError` |
+| Refund on unknown capture | 404 `INVALID_RESOURCE_ID` (`field: capture_id`, `location: path`) |
+| List webhooks | 0 configured on the app |
+| Verify webhook signature | Endpoint `/v1/notifications/verify-webhook-signature` confirmed. Required body: `auth_algo, cert_url, transmission_id, transmission_sig, transmission_time, webhook_id, webhook_event`. **`webhook_id` is required and must match `^[a-zA-Z0-9]+$`** (400 otherwise). With a bogus id it returns 200 `{verification_status:"FAILURE"}` |
 
-**This is the point where live PayPal credentials become necessary.** Nothing further on the PayPal side can be verified until it's done.
+### Assumptions now settled
+1. No-email invoices: sandbox accepts `send_to_recipient:false`; status goes `DRAFT → UNPAID` and the payer link works for sharing. ✅
+2. Status after `/send`: **`SENT`** when emailed to a recipient, **`UNPAID`** when not. Both already treated as awaiting payment. ✅
+5. Real error names: `ORDER_NOT_APPROVED` (422), `INVALID_RESOURCE_ID` (404) confirmed. `REFUND_AMOUNT_EXCEEDED` etc. still to see on a real capture.
+6. Defaults: Gemini `gemini-2.5-flash`, Groq `openai/gpt-oss-120b` (`lib/config.ts`). Per Groq docs, `gpt-oss-120b` is **text-only**; Groq vision models are `qwen/qwen3.8-27b` (max 3 images) and `meta-llama/llama-4-scout-17b-16e-instruct` (being deprecated). **Note:** the vision regex in `lib/agent/provider.ts` does not match `qwen`, so set it if we switch Groq to Qwen for screenshots. Live model calls still unverified (no key yet).
 
-1. Sign in at **developer.paypal.com** with a PayPal account.
-2. Under *Testing Tools → Sandbox accounts*, create a **US Business** and a **US Personal** sandbox account. Don't use IN sandbox accounts: an unofficial report shows IN sandbox sellers get "only able to send payments", and INR can't be received.
-3. Under *Apps & Credentials (Sandbox)*, **Create App** (Merchant) tied to the US business sandbox account, and enable **Invoicing** in its features.
-4. Put the values in `.env.local`:
-   ```
-   PAYPAL_MODE=sandbox
-   PAYPAL_CLIENT_ID=...
-   PAYPAL_CLIENT_SECRET=...
-   PAYPAL_INVOICER_EMAIL=<the US business sandbox email>
-   ```
-5. Also needed, independently: a Google AI Studio key (`LLM_PROVIDER=gemini`, `GEMINI_API_KEY`) and/or a Groq key.
-6. Later, once deployed to a public URL: add a webhook on the app for the events in `lib/paypal/webhooks.ts` (`SUBSCRIBED_EVENTS`) and set `PAYPAL_WEBHOOK_ID`.
+### Still unverified (needs a browser buyer approval or a public URL)
+- **Order approve → capture → tracking → refund**: open the `payer-action` link, log in as the sandbox buyer, approve, then capture. Real refund response should carry `id, status (COMPLETED|PENDING|FAILED|CANCELLED), status_details, amount, note_to_payer, seller_payable_breakdown, payer, links` (Payments v2 schema). Request body: optional `amount`, `note_to_payer`, `invoice_id`, `custom_id`.
+- **Invoice payment**: pay invoice via the payer-view link as the buyer; check `PAID` and the `payments.transactions[].payment_id` shape.
+- 3. `PAYMENT.CAPTURE.REFUNDED` payload `up` link shape.
+- 4. Refunding an invoice payment via Payments v2.
+- **Webhook verification for real**: needs a sandbox webhook on the app (none exists), which needs a public HTTPS URL (Render deploy or a tunnel). Then set `PAYPAL_WEBHOOK_ID`.
+- 7. Tracking carrier enum subset. 8. `@paypal/agent-toolkit` re-check.
 
-After step 4 I will run a scripted sandbox smoke test to settle the unverified items above. It will create an invoice, send it, pay it as the personal account through the payer link, create and capture an order, refund it, and verify a webhook.
+## Next steps
+1. Browser step: buyer approves the checkout order and pays one invoice in the sandbox, then re-run capture/refund/tracking.
+2. Get a free Gemini (AI Studio) and/or Groq key and run the LLM agent live.
+3. Deploy, create the sandbox webhook for `SUBSCRIBED_EVENTS`, set `PAYPAL_WEBHOOK_ID`.
 
 ## Not started
 

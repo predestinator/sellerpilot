@@ -14,7 +14,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "smoke": "tsx scripts/live-smoke.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.102",
@@ -35,6 +36,7 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.2",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^4.1.12"
   }
