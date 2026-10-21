@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "smoke": "tsx scripts/live-smoke.ts"
+    "smoke": "tsx scripts/live-smoke.ts",
+    "agent:demo": "tsx scripts/live-agent.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.102",

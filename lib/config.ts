@@ -83,7 +83,7 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
     },
     llm: {
       provider: llmProvider as 'gemini' | 'groq' | 'offline',
-      gemini: { apiKey: geminiKey, model: nonEmpty(e.GEMINI_MODEL) ?? 'gemini-2.5-flash' },
+      gemini: { apiKey: geminiKey, model: nonEmpty(e.GEMINI_MODEL) ?? 'gemini-flash-lite-latest' },
       groq: {
         apiKey: groqKey,
         model: nonEmpty(e.GROQ_MODEL) ?? 'openai/gpt-oss-120b',

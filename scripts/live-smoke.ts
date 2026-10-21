@@ -181,7 +181,7 @@ async function main() {
       items: [{ name: 'Smoke test mug', quantity: 1, unitPrice: 5 }],
       reference: `${ref}-ord`,
     });
-    return { http: lastCall('/v2/checkout/orders', 'POST')?.status, id: o.id, status: o.status, links: o.links, payerAction: payerLinkOf(o)?.href, payment_source: (o as { payment_source?: unknown }).payment_source };
+    return { http: lastCall('/v2/checkout/orders', 'POST')?.status, id: o.id, status: o.status, links: o.links, payerAction: payerLinkOf(o), payment_source: (o as { payment_source?: unknown }).payment_source };
   });
   if (order?.id) {
     await step('2b. getOrder', async () => {

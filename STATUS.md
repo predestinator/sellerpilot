@@ -1,6 +1,6 @@
 # SellerPilot status
 
-_Last updated 21 Oct 2026, 20:45 IST (UTC+5:30)_
+_Last updated 21 Oct 2026, 21:20 IST (UTC+5:30)_
 
 ## Works today (no accounts needed)
 
@@ -35,8 +35,24 @@ Verified on 21 Oct 2026. Logs are in `../logs/`.
 |---|---|---|
 | PayPal REST gateway (OAuth token cache, retries, `PayPal-Request-Id`, Invoicing v2, Orders v2, Payments v2 refund, webhook verify) | `lib/paypal/client.ts`, `rest.ts`, `builders.ts` | Sandbox Client ID/Secret. Unit-tested against request/response shapes from the official OpenAPI specs (`../refs/`), with a fake `fetch` |
 | Webhook signature verification (`/v1/notifications/verify-webhook-signature`) | `lib/paypal/rest.ts`, `app/api/paypal/webhook` | `PAYPAL_WEBHOOK_ID` plus a public HTTPS URL (deploy, or a tunnel) |
-| LLM agent (Gemini or Groq via Vercel AI SDK v7, multi-step tool calls, image input) | `lib/agent/provider.ts`, `runner.ts` | `GEMINI_API_KEY` or `GROQ_API_KEY`. Tested with the AI SDK mock model, and it falls back to offline on error |
 | AG Studio analytics dashboard | seam: `components/grid/RecordsGrid.tsx`, `/api/records` | AG Studio trial licence (start ~Nov 1) |
+
+## Live agent run: real Gemini + real PayPal sandbox (21 Oct 2026, 21:15 IST)
+
+**Model config.** `LLM_PROVIDER=gemini`, free AI Studio key (no billing). Default model is now `gemini-flash-lite-latest` (`lib/config.ts`). For this new key, `gemini-2.5-flash` returns 404 and `gemini-flash-latest` / 3.x flash return 429/503 on free tier. Flash-lite answers reliably (~10–16 s per agent run, with tool round-trip). Vision (image input) verified on it. The runner already uses AI SDK `maxRetries: 2` and falls back to the offline planner on provider error.
+
+`npm run agent:demo` (`scripts/live-agent.ts`) sends natural-language requests through `runAgent` → tools → policy-gated `dispatch` → `RestPayPalGateway`. It uses its own DB `./data/sellerpilot-sandbox.db` and sets `APPROVE_FIRST_CONTACT=false` by default so the USD threshold is what gets tested (override via env). Secrets are redacted; the report goes to `../logs/live-agent-*.json`. Pass your own request: `npm run agent:demo -- "Invoice ..."`.
+
+| Request | Tool call | Real result |
+|---|---|---|
+| "Invoice Acme Co (billing acme@example.com) $120 for a logo design project, net 15" | `create_invoice` {Acme Co, acme@example.com, USD, 1× Logo design project @120, dueInDays 15} | **Real sandbox invoice `INV2-72YU-E3CK-E8MZ-229F`** (#0005), status `SENT`, USD 120.00, due 2026-11-05 (`DUE_ON_DATE_SPECIFIED`), invoicer = sandbox business. Read back independently via GET. Payer view: https://www.sandbox.paypal.com/invoice/p/#INV2-72YU-E3CK-E8MZ-229F |
+| "Invoice Globex Corp (billing ap@globex.example.com) $500 for a full brand identity package, net 30" | `create_invoice` | **Guardrail fired:** `pending_approval` (`apr_f4156300`), reason "Total 500.00 USD is above the 150 USD auto-send limit." Nothing was sent to PayPal. |
+
+Observations:
+- `/send` returns payer-view `#INV2-XXXX-...`; `metadata.recipient_view_url` on GET is `#XXXXXXXXXXXXXXXX` (no prefix/dashes). We store the `/send` one.
+- Flash-lite inferred `country: "US"` for Globex even though the prompt says to infer country only when it's stated. Harmless for now; tighten the prompt or strip the field if it matters.
+- On pending approval, the model's reply says "Invoice created ... pending approval". Wording could be crisper ("queued, not sent").
+- With the app default `APPROVE_FIRST_CONTACT=true`, the $120 Acme request would also be queued (new customer). That is by design.
 
 ## Live sandbox smoke test (21 Oct 2026, 20:40 IST)
 
@@ -61,11 +77,11 @@ Verified on 21 Oct 2026. Logs are in `../logs/`.
 1. No-email invoices: sandbox accepts `send_to_recipient:false`; status goes `DRAFT → UNPAID` and the payer link works for sharing. ✅
 2. Status after `/send`: **`SENT`** when emailed to a recipient, **`UNPAID`** when not. Both already treated as awaiting payment. ✅
 5. Real error names: `ORDER_NOT_APPROVED` (422), `INVALID_RESOURCE_ID` (404) confirmed. `REFUND_AMOUNT_EXCEEDED` etc. still to see on a real capture.
-6. Defaults: Gemini `gemini-2.5-flash`, Groq `openai/gpt-oss-120b` (`lib/config.ts`). Per Groq docs, `gpt-oss-120b` is **text-only**; Groq vision models are `qwen/qwen3.8-27b` (max 3 images) and `meta-llama/llama-4-scout-17b-16e-instruct` (being deprecated). **Note:** the vision regex in `lib/agent/provider.ts` does not match `qwen`, so set it if we switch Groq to Qwen for screenshots. Live model calls still unverified (no key yet).
+6. Defaults: Gemini **`gemini-flash-lite-latest`** (see Live agent section), Groq `openai/gpt-oss-120b` (`lib/config.ts`). Per Groq docs, `gpt-oss-120b` is **text-only**; Groq vision models are `qwen/qwen3.8-27b` (max 3 images) and `meta-llama/llama-4-scout-17b-16e-instruct` (being deprecated). **Note:** the vision regex in `lib/agent/provider.ts` does not match `qwen`, so set it if we switch Groq to Qwen for screenshots.
 
 ### Still unverified (needs a browser buyer approval or a public URL)
 - **Order approve → capture → tracking → refund**: open the `payer-action` link, log in as the sandbox buyer, approve, then capture. Real refund response should carry `id, status (COMPLETED|PENDING|FAILED|CANCELLED), status_details, amount, note_to_payer, seller_payable_breakdown, payer, links` (Payments v2 schema). Request body: optional `amount`, `note_to_payer`, `invoice_id`, `custom_id`.
-- **Invoice payment**: pay invoice via the payer-view link as the buyer; check `PAID` and the `payments.transactions[].payment_id` shape.
+- **Invoice payment**: pay `INV2-72YU-E3CK-E8MZ-229F` via its payer-view link as the sandbox buyer (`sb-qx72v53480150@personal.example.com`); check `PAID` and the `payments.transactions[].payment_id` shape.
 - 3. `PAYMENT.CAPTURE.REFUNDED` payload `up` link shape.
 - 4. Refunding an invoice payment via Payments v2.
 - **Webhook verification for real**: needs a sandbox webhook on the app (none exists), which needs a public HTTPS URL (Render deploy or a tunnel). Then set `PAYPAL_WEBHOOK_ID`.
@@ -73,7 +89,7 @@ Verified on 21 Oct 2026. Logs are in `../logs/`.
 
 ## Next steps
 1. Browser step: buyer approves the checkout order and pays one invoice in the sandbox, then re-run capture/refund/tracking.
-2. Get a free Gemini (AI Studio) and/or Groq key and run the LLM agent live.
+2. ~~Run the LLM agent live~~ done (Gemini flash-lite). Next: approve `apr_f4156300` from `/approvals` to verify approved → executed on live sandbox.
 3. Deploy, create the sandbox webhook for `SUBSCRIBED_EVENTS`, set `PAYPAL_WEBHOOK_ID`.
 
 ## Not started
