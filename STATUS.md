@@ -1,6 +1,8 @@
 # SellerPilot status
 
-_Last updated 21 Oct 2026, 21:20 IST (UTC+5:30)_
+_Last updated 22 Oct 2026, 19:20 IST (UTC+5:30)_
+
+**22 Oct (submission prep):** fixed a render loop in `RecordsGrid` (pinned totals recomputed on every `modelUpdated`) that silently blocked client-side navigation away from the overview; README rewritten for judges; screenshots in `docs/screenshots`; fresh-copy check (`npm ci && npm run build && npm test`, 61/61) passes; demo video recorded from mock mode.
 
 ## Works today (no accounts needed)
 
@@ -97,5 +99,4 @@ Observations:
 
 - Deploy (Render) and a public webhook URL
 - AG Studio dashboard (milestone M4)
-- Demo video, Devpost write-up
-- Public GitHub repo (local git only so far; nothing pushed)
+- Public GitHub repo (local git only so far; nothing pushed). Demo video and Devpost text are drafted in `../submission/`.

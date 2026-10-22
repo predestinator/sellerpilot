@@ -5,7 +5,7 @@
   "description": "AI back office for cross-border sellers: chat order -> PayPal invoice/checkout, payment tracking, collections, capture/refund with human approval.",
   "license": "MIT",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "scripts": {
     "dev": "next dev",

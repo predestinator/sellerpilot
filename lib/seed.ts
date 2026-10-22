@@ -77,7 +77,7 @@ async function seedApprovalQueue() {
   const jake = byName('Jake Morales');
   const lukas = byName('Lukas Becker');
   const results = [
-    await dispatch('create_invoice', { customer: { name: 'Daniel Park', email: 'daniel.park@example.com', country: 'US' }, currency: 'USD', dueInDays: 14, items: [{ name: 'Hand-painted mural commission (deposit)', quantity: 1, unitPrice: 500 }], note: 'Deposit for the 6 ft mural we discussed on Instagram.' }, 'agent'),
+    await dispatch('create_invoice', { customer: { name: 'Daniel Park', email: 'daniel.park@example.com', country: 'US' }, currency: 'USD', dueInDays: 14, items: [{ name: 'Hand-painted mural commission (deposit)', quantity: 1, unitPrice: 500 }], note: 'Deposit for the 6 ft mural we discussed in our DMs.' }, 'agent'),
     ...(jake ? [await dispatch('refund_payment', { orderId: jake.id, amount: jake.paid, reason: 'Diya set arrived dented in transit; full refund.' }, 'agent')] : []),
     ...(lukas ? [await dispatch('send_reminder', { invoiceId: lukas.id, tone: 'final' }, 'collections')] : []),
   ];

@@ -40,7 +40,7 @@ export default function Overview() {
           <div className="pitch">
             <h2>Get paid from abroad without the admin.</h2>
             <p>
-              SellerPilot is an AI back office for small sellers who take orders in DMs and WhatsApp and get paid through PayPal.
+              SellerPilot is an AI back office for small sellers who take orders in social DMs and chat apps and get paid through PayPal.
               Paste a chat message or a screenshot and the agent drafts the PayPal invoice or checkout link, tracks the payment,
               chases late buyers, then captures, ships and refunds. Anything risky waits for your approval first.
             </p>

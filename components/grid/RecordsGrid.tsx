@@ -118,7 +118,9 @@ export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall'
     (e: ModelUpdatedEvent<CommerceRecord>) => {
       const shown: CommerceRecord[] = [];
       e.api.forEachNodeAfterFilter((n) => n.data && shown.push(n.data));
-      setVisible(shown);
+      // Only update when the visible set really changed. Pinned-row updates also fire
+      // modelUpdated, and an unconditional setState here loops and starves client navigation.
+      setVisible((prev) => (prev && prev.length === shown.length && prev.every((r, i) => r === shown[i]) ? prev : shown));
       onVisibleCount?.(shown.length);
     },
     [onVisibleCount],
