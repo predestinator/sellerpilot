@@ -70,20 +70,20 @@ Built on **AG Grid Community v36** (no Enterprise licence):
 
 ```mermaid
 flowchart LR
-  S[Seller: DM / note / screenshot] --> UI[Next.js console<br/>Agent inbox · AG Grid dashboard · Approvals]
-  UI --> AG[Agent runner<br/>AI SDK tool calls]
-  AG --> LLM{{Gemini · Groq · offline planner}}
-  AG --> D[dispatch&#40;&#41;<br/>policy · audit · idempotency]
-  UI -- row actions / approve --> D
-  C[Collections agent] --> D
-  D -- allowed --> PP[PayPal gateway<br/>REST sandbox or mock]
-  D -- needs approval --> Q[(Approval queue)]
-  Q -- Approve & run --> D
-  PP --> API[(PayPal sandbox APIs<br/>Invoicing v2 · Orders v2 · Payments v2)]
-  API -- webhooks --> W[Webhook route<br/>verify · dedupe · re-fetch]
-  W --> DB[(SQLite cache + audit log)]
+  S["Seller: DM / note / screenshot"] --> UI["Next.js console<br/>Agent inbox · AG Grid dashboard · Approvals"]
+  UI --> AG["Agent runner<br/>AI SDK tool calls"]
+  AG --> LLM{{"Gemini · Groq · offline planner"}}
+  AG --> D["dispatch()<br/>policy · audit · idempotency"]
+  UI -- "row actions / approve" --> D
+  C["Collections agent"] --> D
+  D -- "allowed" --> PP["PayPal gateway<br/>REST sandbox or mock"]
+  D -- "needs approval" --> Q[("Approval queue")]
+  Q -- "Approve and run" --> D
+  PP --> API[("PayPal sandbox APIs<br/>Invoicing v2 · Orders v2 · Payments v2")]
+  API -- "webhooks" --> W["Webhook route<br/>verify · dedupe · re-fetch"]
+  W --> DB[("SQLite cache + audit log")]
   D --> DB
-  DB -- SSE --> UI
+  DB -- "SSE" --> UI
 ```
 
 ### Code map
