@@ -55,7 +55,7 @@ export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall'
     };
     const customer: ColDef<CommerceRecord> = { headerName: 'Customer', field: 'customerName', cellRenderer: CustomerCell, flex: 1.4, minWidth: 210, getQuickFilterText: (p) => `${p.data?.customerName} ${p.data?.customerEmail ?? ''} ${p.data?.country ?? ''}` };
     const kind: ColDef<CommerceRecord> = { headerName: 'Type', field: 'kind', width: 110, valueFormatter: (p) => (p.node?.rowPinned ? '' : p.value === 'invoice' ? 'Invoice' : 'Checkout'), filter: 'agTextColumnFilter' };
-    const items: ColDef<CommerceRecord> = { headerName: 'Items', valueGetter: (p) => p.data?.items.map((i) => `${i.quantity}× ${i.name}`).join(', '), flex: 1.6, minWidth: 180, tooltipValueGetter: (p) => p.value as string };
+    const items: ColDef<CommerceRecord> = { headerName: 'Items', valueGetter: (p) => p.data?.items.map((i) => `${i.quantity}× ${i.name}`).join(', '), flex: 1.6, minWidth: 120, tooltipValueGetter: (p) => p.value as string };
     const amount: ColDef<CommerceRecord> = { headerName: 'Amount', field: 'amount', valueFormatter: money, type: 'rightAligned', width: 120, filter: 'agNumberColumnFilter', enableCellChangeFlash: true };
     const status: ColDef<CommerceRecord> = {
       headerName: 'Status',
@@ -81,7 +81,7 @@ export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall'
     const overdue: ColDef<CommerceRecord> = { headerName: 'Days late', valueGetter: (p) => (!p.node?.rowPinned && p.data && lifecycleOf(p.data) === 'awaiting_payment' ? daysOverdue(p.data) : null), width: 110, type: 'rightAligned', filter: 'agNumberColumnFilter' };
     const reminders: ColDef<CommerceRecord> = { headerName: 'Nudges', field: 'reminders', width: 95, type: 'rightAligned', enableCellChangeFlash: true };
     const created: ColDef<CommerceRecord> = { headerName: 'Created', field: 'createdAt', valueFormatter: date, width: 105, sort: view === 'overdue' ? undefined : 'desc' };
-    const actions: ColDef<CommerceRecord> = { headerName: '', cellRenderer: ActionsCell, width: 240, pinned: 'right', sortable: false, filter: false, resizable: false };
+    const actions: ColDef<CommerceRecord> = { headerName: '', cellRenderer: ActionsCell, width: 225, pinned: 'right', sortable: false, filter: false, resizable: false };
 
     if (view === 'payments') {
       return [
