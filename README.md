@@ -48,7 +48,7 @@ Every POST carries a `PayPal-Request-Id` (the capture key is derived from the or
 
 ## How AI is used
 
-- **Tool-calling agent** (Vercel AI SDK `ai` v7). The model reads the seller's message and calls typed zod tools (`lib/agent/tools.ts`): `create_invoice`, `create_checkout`, `send_reminder`, `capture_order`, `refund_payment`, `add_tracking`, `cancel_invoice` and `list_records`. It runs multi-step, so it can look a customer up, then act.
+- **Tool-calling agent** (Vercel AI SDK `ai` v7). The model reads the seller's message and calls typed zod tools (`lib/agent/tools.ts`): `create_invoice`, `create_checkout`, `send_reminder`, `capture_order`, `refund_payment`, `add_tracking`, `cancel_invoice`, plus read-only `list_records` and `business_summary`. It runs multi-step, so it can look a customer up, then act.
 - **Vision.** A screenshot of an order (PNG/JPEG/WebP) can be attached in the Agent inbox; the Gemini path reads it like a typed message.
 - **The model proposes, policy decides.** Every tool call goes through one server-side `dispatch()` (`lib/actions.ts`) that applies the guardrails in `lib/agent/policies.ts` whatever the model says. The model never sees credentials and has no direct PayPal access.
 - **Collections agent.** Picks a friendly, firm or final tone from days overdue; final notices need approval. Run it from the overview or `POST /api/cron/collections`.
