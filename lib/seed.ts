@@ -3,6 +3,7 @@
  * India-based maker selling to buyers abroad. Uses the mock gateway with a shifted
  * clock so some invoices are genuinely overdue. Never runs in sandbox mode.
  */
+import { dispatch } from './actions';
 import { config } from './config';
 import { audit, records, resetAppData, SqliteMockStore } from './db/repo';
 import type { InvoiceInput, CheckoutInput } from './domain';
@@ -61,8 +62,26 @@ export async function seedDemoData(force = false) {
     }
     records.upsert({ ...orderToRecord(o, 'mock'), customerName: s.customer.name, customerEmail: s.customer.email, country: s.customer.country, items: s.items, refunded, trackingNumber: s.tracking });
   }
-  audit.log({ actor: 'system', action: 'seed_demo_data', outcome: 'done', detail: { invoices: INVOICES.length, orders: ORDERS.length } });
-  return { seeded: true, invoices: INVOICES.length, orders: ORDERS.length };
+  const held = await seedApprovalQueue();
+  audit.log({ actor: 'system', action: 'seed_demo_data', outcome: 'done', detail: { invoices: INVOICES.length, orders: ORDERS.length, heldForApproval: held } });
+  return { seeded: true, invoices: INVOICES.length, orders: ORDERS.length, heldForApproval: held };
+}
+
+/**
+ * A few agent/collections requests that the policy engine parks for a human, so the
+ * approval queue is populated on first run. They go through the real `dispatch`
+ * path (same policy + audit as live use); nothing executes until someone approves.
+ */
+async function seedApprovalQueue() {
+  const byName = (n: string) => records.list().find((r) => r.customerName === n);
+  const jake = byName('Jake Morales');
+  const lukas = byName('Lukas Becker');
+  const results = [
+    await dispatch('create_invoice', { customer: { name: 'Daniel Park', email: 'daniel.park@example.com', country: 'US' }, currency: 'USD', dueInDays: 14, items: [{ name: 'Hand-painted mural commission (deposit)', quantity: 1, unitPrice: 500 }], note: 'Deposit for the 6 ft mural we discussed on Instagram.' }, 'agent'),
+    ...(jake ? [await dispatch('refund_payment', { orderId: jake.id, amount: jake.paid, reason: 'Diya set arrived dented in transit; full refund.' }, 'agent')] : []),
+    ...(lukas ? [await dispatch('send_reminder', { invoiceId: lukas.id, tone: 'final' }, 'collections')] : []),
+  ];
+  return results.filter((r) => r.status === 'pending_approval').length;
 }
 
 let seeding: Promise<unknown> | undefined;

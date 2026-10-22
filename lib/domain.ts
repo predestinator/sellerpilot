@@ -78,3 +78,22 @@ export function daysOverdue(r: Pick<CommerceRecord, 'dueDate'>, now = new Date()
   const due = new Date(`${r.dueDate}T23:59:59Z`).getTime();
   return Math.max(0, Math.floor((now.getTime() - due) / 86_400_000));
 }
+
+/** Status buckets for the filter chips above the grid (applied before AG Grid's own column filters). */
+export type StatusBucket = 'any' | 'open' | 'overdue' | 'paid' | 'refunded' | 'cancelled';
+
+export function inBucket(r: CommerceRecord, b: StatusBucket): boolean {
+  const lc = lifecycleOf(r);
+  if (b === 'any') return true;
+  if (b === 'open') return lc === 'awaiting_payment' || lc === 'approved' || lc === 'draft';
+  if (b === 'overdue') return lc === 'awaiting_payment' && daysOverdue(r) > 0;
+  if (b === 'paid') return lc === 'paid';
+  if (b === 'refunded') return lc === 'refunded';
+  return lc === 'cancelled';
+}
+
+/** Open balance still owed by the buyer (0 for drafts, paid, refunded or cancelled; matches summarize()). */
+export const openBalance = (r: CommerceRecord) => {
+  const lc = lifecycleOf(r);
+  return lc === 'awaiting_payment' || lc === 'approved' ? Math.max(0, r.amount - r.paid) : 0;
+};

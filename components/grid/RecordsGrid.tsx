@@ -1,14 +1,15 @@
 'use client';
-import { useMemo } from 'react';
-import { AllCommunityModule, type ColDef, type ValueFormatterParams, type RowClassRules } from 'ag-grid-community';
+import { useCallback, useMemo, useState } from 'react';
+import { AllCommunityModule, type ColDef, type GridApi, type ModelUpdatedEvent, type ValueFormatterParams, type RowClassRules } from 'ag-grid-community';
 import { AgGridProvider, AgGridReact } from 'ag-grid-react';
-import { daysOverdue, lifecycleOf, type CommerceRecord } from '@/lib/domain';
+import { daysOverdue, inBucket, lifecycleOf, openBalance, type CommerceRecord, type StatusBucket } from '@/lib/domain';
 import { sellerPilotTheme } from './theme';
 import { ActionsCell, CustomerCell, LIFECYCLE_LABEL, PaidCell, StatusCell, type GridContext } from './renderers';
 
 const modules = [AllCommunityModule];
 
 export type GridView = 'all' | 'invoice' | 'order' | 'payments' | 'overdue';
+export { inBucket, openBalance, type StatusBucket } from '@/lib/domain';
 
 const money = ({ value, data }: ValueFormatterParams<CommerceRecord>) =>
   typeof value === 'number' && data?.currency ? value.toLocaleString('en-US', { style: 'currency', currency: data.currency }) : '';
@@ -16,22 +17,32 @@ const date = ({ value }: ValueFormatterParams<CommerceRecord>) =>
   value ? new Date(value).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : '';
 
 /**
- * Seam for AG Studio: this component owns only column definitions + renderers.
- * The Studio dashboard (lib/studio) will consume the same CommerceRecord rows.
+ * AG Grid Community only (AllCommunityModule; no Enterprise licence needed).
+ *
+ * SEAM (AG Studio / newer AG offering): this component owns only column definitions,
+ * renderers and the CommerceRecord feed from /api/records. To swap in AG Studio
+ * dashboards later, point the Studio data source at the same rows and keep the
+ * renderers/actions here; nothing in lib/ depends on the grid.
  */
-export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall' }: {
+export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall', bucket = 'any', onApi, onVisibleCount }: {
   rows: CommerceRecord[];
   view: GridView;
   quickFilter?: string;
   onAction: GridContext['onAction'];
-  height?: 'tall' | 'normal';
+  height?: 'tall' | 'normal' | 'auto';
+  bucket?: StatusBucket;
+  /** Receives the grid API once ready (CSV export, column state, etc.). */
+  onApi?: (api: GridApi<CommerceRecord>) => void;
+  /** Rows left after the quick filter + column filters, for "showing N of M". */
+  onVisibleCount?: (n: number) => void;
 }) {
   const data = useMemo(() => {
-    if (view === 'invoice' || view === 'order') return rows.filter((r) => r.kind === view);
-    if (view === 'payments') return rows.filter((r) => r.paid > 0);
-    if (view === 'overdue') return rows.filter((r) => lifecycleOf(r) === 'awaiting_payment' && daysOverdue(r) > 0).sort((a, b) => daysOverdue(b) - daysOverdue(a));
-    return rows;
-  }, [rows, view]);
+    let out = rows;
+    if (view === 'invoice' || view === 'order') out = rows.filter((r) => r.kind === view);
+    if (view === 'payments') out = rows.filter((r) => r.paid > 0);
+    if (view === 'overdue') out = rows.filter((r) => lifecycleOf(r) === 'awaiting_payment' && daysOverdue(r) > 0).sort((a, b) => daysOverdue(b) - daysOverdue(a));
+    return bucket === 'any' ? out : out.filter((r) => inBucket(r, bucket));
+  }, [rows, view, bucket]);
 
   const columnDefs = useMemo<ColDef<CommerceRecord>[]>(() => {
     const ref: ColDef<CommerceRecord> = {
@@ -55,12 +66,22 @@ export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall'
       filterValueGetter: (p) => (p.data ? LIFECYCLE_LABEL[lifecycleOf(p.data)] : ''),
       comparator: (_a, _b, na, nb) => (na.data && nb.data ? lifecycleOf(na.data).localeCompare(lifecycleOf(nb.data)) : 0),
     };
+    const balance: ColDef<CommerceRecord> = {
+      headerName: 'Open balance',
+      valueGetter: (p) => (!p.data ? null : p.node?.rowPinned ? (p.data as CommerceRecord & { openTotal?: number }).openTotal ?? null : openBalance(p.data)),
+      valueFormatter: (p) => (p.value ? money(p) : '—'),
+      type: 'rightAligned',
+      width: 130,
+      filter: 'agNumberColumnFilter',
+      cellClass: (p) => (p.value > 0 ? 'cell-owed' : 'cell-muted'),
+    };
+    const currencyCol: ColDef<CommerceRecord> = { headerName: 'Cur.', field: 'currency', width: 80, cellClass: 'mono' };
     const paid: ColDef<CommerceRecord> = { headerName: 'Collected', cellRenderer: PaidCell, width: 140, sortable: false, filter: false };
     const due: ColDef<CommerceRecord> = { headerName: 'Due', field: 'dueDate', valueFormatter: date, width: 100 };
     const overdue: ColDef<CommerceRecord> = { headerName: 'Days late', valueGetter: (p) => (!p.node?.rowPinned && p.data && lifecycleOf(p.data) === 'awaiting_payment' ? daysOverdue(p.data) : null), width: 110, type: 'rightAligned', filter: 'agNumberColumnFilter' };
     const reminders: ColDef<CommerceRecord> = { headerName: 'Nudges', field: 'reminders', width: 95, type: 'rightAligned', enableCellChangeFlash: true };
     const created: ColDef<CommerceRecord> = { headerName: 'Created', field: 'createdAt', valueFormatter: date, width: 105, sort: view === 'overdue' ? undefined : 'desc' };
-    const actions: ColDef<CommerceRecord> = { headerName: '', cellRenderer: ActionsCell, width: 215, pinned: 'right', sortable: false, filter: false, resizable: false };
+    const actions: ColDef<CommerceRecord> = { headerName: '', cellRenderer: ActionsCell, width: 240, pinned: 'right', sortable: false, filter: false, resizable: false };
 
     if (view === 'payments') {
       return [
@@ -79,11 +100,11 @@ export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall'
     }
     if (view === 'overdue') {
       // Compact set: this grid lives in a half-width panel on the overview.
-      return [{ ...ref, width: 100 }, { ...customer, minWidth: 150 }, { ...overdue, width: 90 }, { ...amount, width: 95 }, { ...reminders, width: 80 }, { ...actions, width: 150, cellRendererParams: { compact: true } }];
+      return [{ ...ref, width: 95 }, { ...customer, minWidth: 150 }, { ...overdue, headerName: 'Late', width: 75 }, { ...amount, width: 100 }, { ...reminders, width: 85 }, { ...actions, width: 165, cellRendererParams: { compact: true } }];
     }
     if (view === 'order') return [ref, customer, amount, status, paid, items, { headerName: 'Tracking', field: 'trackingNumber', cellClass: 'mono', width: 150 }, created, actions];
-    if (view === 'invoice') return [ref, customer, amount, status, paid, items, due, reminders, created, actions];
-    return [ref, customer, kind, amount, status, paid, items, due, created, actions];
+    if (view === 'invoice') return [ref, customer, amount, currencyCol, balance, status, paid, due, overdue, reminders, items, created, actions];
+    return [ref, customer, kind, status, amount, currencyCol, balance, paid, due, items, created, actions];
   }, [view]);
 
   const rowClassRules = useMemo<RowClassRules<CommerceRecord>>(
@@ -91,14 +112,26 @@ export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall'
     [],
   );
 
+  // Pinned totals follow what is on screen: recomputed after every filter/sort/quick-search.
+  const [visible, setVisible] = useState<CommerceRecord[] | null>(null);
+  const onModelUpdated = useCallback(
+    (e: ModelUpdatedEvent<CommerceRecord>) => {
+      const shown: CommerceRecord[] = [];
+      e.api.forEachNodeAfterFilter((n) => n.data && shown.push(n.data));
+      setVisible(shown);
+      onVisibleCount?.(shown.length);
+    },
+    [onVisibleCount],
+  );
   const totals = useMemo(() => {
-    const usd = data.filter((r) => r.currency === 'USD');
+    const usd = (visible ?? data).filter((r) => r.currency === 'USD');
     if (!usd.length) return [];
-    return [{ id: '__total', kind: 'invoice', customerName: `Total (USD, ${usd.length} rows)`, currency: 'USD', amount: usd.reduce((a, r) => a + r.amount, 0), paid: usd.reduce((a, r) => a + r.paid, 0), refunded: usd.reduce((a, r) => a + r.refunded, 0), items: [], status: '', createdAt: '', reminders: usd.reduce((a, r) => a + r.reminders, 0), source: 'mock', updatedAt: '' } as unknown as CommerceRecord];
-  }, [data]);
+    const sum = (f: (r: CommerceRecord) => number) => usd.reduce((a, r) => a + f(r), 0);
+    return [{ id: '__total', kind: 'invoice', customerName: `Total (USD, ${usd.length} rows)`, currency: 'USD', amount: sum((r) => r.amount), paid: sum((r) => r.paid), refunded: sum((r) => r.refunded), items: [], status: '', createdAt: '', reminders: sum((r) => r.reminders), openTotal: sum(openBalance), source: 'mock', updatedAt: '' } as unknown as CommerceRecord];
+  }, [data, visible]);
 
   return (
-    <div className={`grid-wrap ${height === 'tall' ? 'tall' : ''}`}>
+    <div className={`grid-wrap ${height === 'normal' ? '' : height}`}>
       <AgGridProvider modules={modules}>
         <AgGridReact<CommerceRecord>
           theme={sellerPilotTheme}
@@ -110,8 +143,11 @@ export function RecordsGrid({ rows, view, quickFilter, onAction, height = 'tall'
           quickFilterText={quickFilter}
           rowClassRules={rowClassRules}
           pinnedBottomRowData={totals}
+          onGridReady={(e) => onApi?.(e.api)}
+          onModelUpdated={onModelUpdated}
           tooltipShowDelay={400}
           animateRows
+          domLayout={height === 'auto' ? 'autoHeight' : 'normal'}
           pagination={data.length > 50}
           paginationPageSize={50}
           overlayNoRowsTemplate="<span style='color:#8a97ab'>Nothing here yet. Paste an order into the Agent inbox.</span>"

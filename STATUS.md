@@ -17,6 +17,7 @@ Everything below runs on `npm run dev` with zero configuration: mock PayPal plus
 - **Dashboard (AG Grid Community v36).**
   - KPI cards, the "who still owes me" grid, and the orders/invoices/checkout/payments grid with quick filter, column filters, a pinned totals row and progress bars.
   - Live cell flashes over server-sent events, the approval queue, and the full activity log grid.
+  - 22 Oct: shared KPI strip (incl. $ held for approval), status filter chips with counts, Open balance + currency columns, CSV export, totals row follows filters, approval queue as an AG Grid with Approve & run / Reject (overview, dashboard tab, /approvals), demo seed parks 3 real policy-held requests, judge-facing hero on the overview. Mock demo server can run beside the sandbox one: `PAYPAL_MODE=mock SELLERPILOT_DB=./data/sellerpilot-demo.db NEXT_DIST_DIR=.next-demo next dev -p 3100`.
 - **Audit.** Every tool call, approval, refusal and webhook is in `audit_log`, and every agent run is in `agent_runs`.
 
 Verified on 21 Oct 2026. Logs are in `../logs/`.

@@ -30,7 +30,7 @@ a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 code, .mono { font-family: var(--mono); font-size: 12px; }
 
-.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+.app { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; background: linear-gradient(to right, var(--nav) 232px, var(--bg) 232px); }
 .nav { background: var(--nav); color: var(--nav-ink); padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; }
 .brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; font-size: 17px; padding: 4px 10px 22px; letter-spacing: -0.01em; }
 .brand small { display: block; font-weight: 500; font-size: 11px; color: var(--nav-ink); opacity: 0.7; letter-spacing: 0; }
@@ -148,3 +148,43 @@ code, .mono { font-family: var(--mono); font-size: 12px; }
 .row-gap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ag-row.row-overdue { background-color: #fff7f7; }
 .ag-row-pinned { font-weight: 700; background: #f7f9fd; }
+
+/* ── dashboard polish ─────────────────────────────────────────────────────── */
+.cell-owed { font-weight: 700; color: var(--ink); }
+.cell-muted { color: var(--faint); }
+.ag-header-cell-text { text-transform: none; }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.fchip { border: 1px solid var(--border); background: #fff; border-radius: 999px; padding: 4px 11px; font: inherit; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.fchip:hover { border-color: #c8d1e0; }
+.fchip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.fchip .n { background: rgba(127,140,160,0.18); border-radius: 999px; padding: 0 6px; font-size: 11px; }
+.fchip.on .n { background: rgba(255,255,255,0.22); }
+.grid-meta { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); }
+.grid-meta .grow { flex: 1; }
+.tabs .count { margin-left: 6px; background: var(--warn); color: #fff; border-radius: 999px; padding: 0 7px; font-size: 11px; }
+.kpi a.kpi-link { color: inherit; }
+.kpi .value small { font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 6px; }
+.kpis.compact .kpi { padding: 12px 16px; }
+.kpis.compact .kpi .value { font-size: 22px; }
+
+.hero { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 0; overflow: hidden; }
+.hero .pitch { padding: 22px 24px; }
+.hero h2 { font-size: 21px; margin: 0 0 8px; letter-spacing: -0.02em; }
+.hero p { margin: 0 0 14px; color: var(--muted); line-height: 1.55; max-width: 62ch; }
+.hero .ctas { display: flex; gap: 8px; flex-wrap: wrap; }
+.hero .steps { background: #f7f9fd; border-left: 1px solid var(--border); padding: 18px 22px; margin: 0; list-style: none; counter-reset: s; display: flex; flex-direction: column; gap: 10px; }
+.hero .steps li { counter-increment: s; display: grid; grid-template-columns: 24px 1fr; gap: 10px; line-height: 1.45; font-size: 13px; }
+.hero .steps li::before { content: counter(s); width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; }
+.hero .steps b { display: block; }
+.hero .steps span { color: var(--muted); }
+.flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 16px; font-size: 12px; }
+.flow span { background: var(--accent-soft); color: var(--accent); border-radius: 6px; padding: 3px 8px; font-weight: 600; }
+.flow i { color: var(--faint); font-style: normal; }
+@media (max-width: 1100px) { .hero { grid-template-columns: 1fr; } .hero .steps { border-left: 0; border-top: 1px solid var(--border); } }
+
+/* AG Grid cells inherit line-height = row height; keep buttons/pills compact inside them. */
+.cell-actions .btn, .ag-cell .pill { line-height: 18px; }
+.cell-customer { gap: 1px; }
+.cell-customer > span, .cell-customer small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.grid-wrap.auto { height: auto; }
+@media (max-width: 1100px) { .app { background: var(--bg); } }
