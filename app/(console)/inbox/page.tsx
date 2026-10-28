@@ -96,7 +96,7 @@ export default function Inbox() {
               {!turns.length && <div className="empty">Try one of the samples. Every action shows up here with its PayPal result.</div>}
               {turns.map((t, i) => (
                 <div key={i} className={`msg ${t.role}`}>
-                  <div className="meta">{t.role === 'user' ? 'You' : `SellerPilot · ${t.run?.provider ?? ''}`}</div>
+                  <div className="meta">{t.role === 'user' ? 'You' : 'SellerPilot'}</div>
                   {t.image && <Thumb src={t.image} />}
                   <Linkified text={t.text} />
                   {t.run?.fallback && <div className="fallback">{t.run.fallback}</div>}

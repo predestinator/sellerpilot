@@ -10,16 +10,15 @@ export function StatusChips() {
   }, []);
   if (!s) return null;
   const connected = s.paypal.mode === 'sandbox' || s.paypal.mode === 'mock';
-  const localAgent = s.llm.startsWith('offline');
   return (
     <>
       <span className={`chip ${connected ? 'ok' : 'warn'}`} title="PayPal connection">
         <span className="dot" />
         PayPal · {connected ? 'Connected' : 'Offline'}
       </span>
-      <span className={`chip ${localAgent ? 'info' : 'ok'}`} title="SellerPilot agent">
+      <span className={`chip ok`} title="SellerPilot agent">
         <span className="dot" />
-        Agent · {localAgent ? 'Local' : 'Ready'}
+        Agent · Ready
       </span>
       <span className="chip" title="Actions above these amounts wait for your approval">Limits · invoices ${s.policy.approvalThresholdUsd} · refunds ${s.policy.refundAutoLimitUsd}</span>
     </>

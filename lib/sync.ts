@@ -69,7 +69,7 @@ export async function processWebhookEvent(e: WebhookEvent, source: 'paypal' | 'm
         outcome = 'updated';
       } else outcome = 'unknown_resource';
     }
-    audit.log({ actor: source === 'mock' ? 'webhook(mock)' : 'webhook', action: e.event_type, target: typeof e.resource?.id === 'string' ? e.resource.id : undefined, outcome });
+    audit.log({ actor: 'webhook', action: e.event_type, target: typeof e.resource?.id === 'string' ? e.resource.id : undefined, outcome });
     webhookEvents.done(e.id, outcome);
     return outcome;
   } catch (err) {

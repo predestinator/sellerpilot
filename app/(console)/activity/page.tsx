@@ -28,7 +28,7 @@ export default function Activity() {
       <Topbar title="Activity log" />
       <div className="content">
         <div className="row-gap">
-          <span className="muted">Every tool call, approval, webhook and refusal, in order. Nothing the agent does is invisible.</span>
+          <span className="muted">Every tool call, approval and webhook, in order.</span>
           <div style={{ flex: 1 }} />
           <input className="search" type="search" placeholder="Filter log…" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
