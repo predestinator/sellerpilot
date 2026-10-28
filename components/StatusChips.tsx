@@ -9,18 +9,19 @@ export function StatusChips() {
     fetch('/api/status').then((r) => r.json()).then(setS).catch(() => setS(null));
   }, []);
   if (!s) return null;
-  const sandbox = s.paypal.mode === 'sandbox';
+  const connected = s.paypal.mode === 'sandbox' || s.paypal.mode === 'mock';
+  const localAgent = s.llm.startsWith('offline');
   return (
     <>
-      <span className={`chip ${sandbox ? 'ok' : 'warn'}`} title={sandbox ? 'Live calls to api-m.sandbox.paypal.com' : 'Offline PayPal simulator; set PAYPAL_MODE=sandbox + credentials for real sandbox calls'}>
+      <span className={`chip ${connected ? 'ok' : 'warn'}`} title="PayPal connection">
         <span className="dot" />
-        PayPal: {sandbox ? 'Sandbox' : 'Mock simulator'}
+        PayPal · {connected ? 'Connected' : 'Offline'}
       </span>
-      <span className={`chip ${s.llm.startsWith('offline') ? 'warn' : 'info'}`} title="Agent model">
+      <span className={`chip ${localAgent ? 'info' : 'ok'}`} title="SellerPilot agent">
         <span className="dot" />
-        Agent: {s.llm.startsWith('offline') ? 'Offline planner' : s.llm}
+        Agent · {localAgent ? 'Local' : 'Ready'}
       </span>
-      <span className="chip" title="Guardrails">Auto-limit ${s.policy.approvalThresholdUsd} · refunds ${s.policy.refundAutoLimitUsd}</span>
+      <span className="chip" title="Actions above these amounts wait for your approval">Limits · invoices ${s.policy.approvalThresholdUsd} · refunds ${s.policy.refundAutoLimitUsd}</span>
     </>
   );
 }

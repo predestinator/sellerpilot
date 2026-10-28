@@ -32,7 +32,7 @@ export function Nav() {
         </Link>
       ))}
       <div className="spacer" />
-      <div className="foot">Sandbox only. No real money moves.<br />MIT licensed.</div>
+      <div className="foot">MIT licensed.</div>
     </nav>
   );
 }

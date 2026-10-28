@@ -89,7 +89,7 @@ export default function Orders() {
           <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
             <div className="grid-meta">
               <strong>{pending.length} waiting for you</strong>
-              <span>The agent and the collections loop park anything above your guardrails here. Nothing has touched PayPal yet; approving re-checks policy, then runs it.</span>
+              <span>Anything above your limits waits here for your OK. Approve and it runs.</span>
             </div>
             <ApprovalsGrid rows={pending} decide={decide} quickFilter={q} />
           </div>

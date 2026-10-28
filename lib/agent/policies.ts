@@ -33,7 +33,7 @@ export function evaluatePolicy(f: PolicyFacts, actor: Actor, policy: AppConfig['
     case 'create_checkout': {
       if (f.itemCount === 0) deny.push('No line items.');
       if (!(f.total > 0)) deny.push('Total must be greater than zero.');
-      if (f.total > HARD_CEILING) deny.push(`Total exceeds the ${HARD_CEILING.toLocaleString()} hard ceiling.`);
+      if (f.total > HARD_CEILING) deny.push(`Total is over the ${HARD_CEILING.toLocaleString()} per-request maximum.`);
       // PayPal India accounts cannot receive INR (domestic payments stopped 1 Apr 2021); bill abroad in USD etc.
       if (f.currency === 'INR') deny.push('PayPal cannot receive INR for India-based sellers; bill in USD (or the buyer’s currency).');
       if (f.currency !== 'USD') approve.push(`Amount is in ${f.currency}; approval threshold is set in USD.`);

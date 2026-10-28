@@ -55,7 +55,7 @@ export default function Overview() {
           </div>
           <ol className="steps">
             <li><div><b>Paste an order</b><span>In the Agent inbox, try “Invoice Ethan Clarke ethan@example.com for a wedding portrait $420”, or drop a chat screenshot.</span></div></li>
-            <li><div><b>Watch the guardrails</b><span>Invoices over ${limit}, refunds over ${refundLimit}, first-time buyers and final notices are parked for you to approve or reject. Small stuff just runs.</span></div></li>
+            <li><div><b>Approve the big stuff</b><span>Invoices over ${limit}, refunds over ${refundLimit}, first-time buyers and final notices are parked for you to approve or reject. Small stuff just runs.</span></div></li>
             <li><div><b>Work the grid</b><span>Orders &amp; invoices: filter by status, search, remind, capture, track and refund in one row. Every step lands in the activity log.</span></div></li>
           </ol>
         </section>
@@ -66,7 +66,7 @@ export default function Overview() {
           <div className="card" style={{ overflow: 'hidden' }}>
             <div className="card-h">
               <h2>Needs your approval</h2>
-              <span className="muted">held by the guardrails; nothing has touched PayPal yet</span>
+              <span className="muted">waiting for your OK before it runs</span>
               <div className="grow" />
               <Link href="/approvals">All approvals →</Link>
             </div>

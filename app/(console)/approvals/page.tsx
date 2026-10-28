@@ -22,7 +22,7 @@ export default function Approvals() {
             <h2>Waiting for you ({pending.length})</h2>
             <span className="muted">nothing here has touched PayPal yet</span>
             <div className="grow" />
-            {p && <span className="muted">Guardrails: invoices/links over ${p.approvalThresholdUsd}, refunds over ${p.refundAutoLimitUsd}, first-time buyers, final notices, cancellations</span>}
+            {p && <span className="muted">Needs approval: invoices/links over ${p.approvalThresholdUsd}, refunds over ${p.refundAutoLimitUsd}, first-time buyers, final notices, cancellations</span>}
           </div>
           <ApprovalsGrid rows={pending} decide={decide} />
         </div>

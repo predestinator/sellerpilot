@@ -20,7 +20,7 @@ export default async function MockCheckoutPage({ params }: { params: Promise<{ i
   return (
     <div className="hosted">
       <div className="card">
-        <div className="banner">Simulated PayPal checkout (mock mode). In sandbox mode the buyer approves on PayPal.</div>
+        <div className="banner">Buyer checkout preview</div>
         <div className="card-b">
           <h2 style={{ margin: '0 0 2px' }}>{pu?.description}</h2>
           <div className="muted">Order {order.id} · {order.status}</div>
@@ -31,7 +31,7 @@ export default async function MockCheckoutPage({ params }: { params: Promise<{ i
             </tbody>
           </table>
           {order.status === 'PAYER_ACTION_REQUIRED' || order.status === 'CREATED' ? (
-            <SimulateButton op="approve_order" id={id} label="Approve & pay (simulated buyer)" />
+            <SimulateButton op="approve_order" id={id} label="Approve & pay" />
           ) : (
             <p className="muted">This order is {order.status.toLowerCase()}.</p>
           )}

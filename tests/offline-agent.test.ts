@@ -38,7 +38,7 @@ describe('runAgent (offline provider)', () => {
     expect(out.steps[0]!.tool).toBe('create_invoice');
     // First contact → approval queue (guardrail) rather than sending blindly.
     expect((out.steps[0]!.output as { status: string }).status).toBe('pending_approval');
-    expect(out.text).toMatch(/Queued for your approval/);
+    expect(out.text).toMatch(/Waiting for your approval/);
   });
 
   it('answers "who owes me" from the cache', async () => {

@@ -116,8 +116,8 @@ const say = (r: DispatchResult): string => {
     const link = (r.result as { payerUrl?: string }).payerUrl;
     return `Done: ${r.summary}.${link ? ` Payment link: ${link}` : ''}`;
   }
-  if (r.status === 'pending_approval') return `Queued for your approval (${r.approvalId}): ${r.summary}. Why: ${r.reasons.join(' ')}`;
-  if (r.status === 'denied') return `Blocked by a guardrail: ${r.reasons.join(' ')}`;
+  if (r.status === 'pending_approval') return `Waiting for your approval (${r.approvalId}): ${r.summary}. ${r.reasons.join(' ')}`;
+  if (r.status === 'denied') return `Not sent: ${r.reasons.join(' ')}`;
   return `That failed: ${r.error}`;
 };
 

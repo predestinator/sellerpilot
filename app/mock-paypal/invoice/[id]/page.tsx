@@ -19,7 +19,7 @@ export default async function MockInvoicePage({ params }: { params: Promise<{ id
   return (
     <div className="hosted">
       <div className="card">
-        <div className="banner">Simulated PayPal invoice page (mock mode). In sandbox mode the buyer pays on PayPal.</div>
+        <div className="banner">Buyer invoice preview</div>
         <div className="card-b">
           <div className="muted">{inv.invoicer?.business_name}</div>
           <h2 style={{ margin: '4px 0 2px' }}>Invoice {inv.detail.invoice_number}</h2>
@@ -33,7 +33,7 @@ export default async function MockInvoicePage({ params }: { params: Promise<{ id
             </tbody>
           </table>
           {['UNPAID', 'SENT', 'PARTIALLY_PAID'].includes(inv.status ?? '') ? (
-            <SimulateButton op="pay_invoice" id={id} label={`Pay ${fmt(inv.due_amount?.value ?? inv.amount?.value)} (simulated)`} />
+            <SimulateButton op="pay_invoice" id={id} label={`Pay ${fmt(inv.due_amount?.value ?? inv.amount?.value)} `} />
           ) : (
             <p className="muted">This invoice is {inv.status?.toLowerCase()}.</p>
           )}
